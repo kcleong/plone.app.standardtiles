@@ -22,8 +22,6 @@
         provides="Products.GenericSetup.interfaces.EXTENSION"
         />
 
-    <adapter factory=".image.ImageTileDataManager" />
-
     <plone:tile
         name="plone.app.standardtiles.title"
         title="Title"
@@ -289,6 +287,11 @@
         for="*"
         permission="zope2.View"
         template="templates/rsslink.pt"
+        />
+
+    <utility
+        component=".image.availableImagesVocabulary"
+        name="Available Images"
         />
 
 </configure>
