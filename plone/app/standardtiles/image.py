@@ -1,4 +1,4 @@
-from zope.interface import directlyProvides
+from zope.interface import directlyProvides, implements
 from zope import schema
 from zope.schema.vocabulary import SimpleVocabulary
 from zope.schema.interfaces import IVocabularyFactory
