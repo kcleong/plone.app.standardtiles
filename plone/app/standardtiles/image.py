@@ -1,32 +1,89 @@
-from zope.interface import directlyProvides, implements
+from zope.interface import directlyProvides, implementsOnly, implementer, Interface
 from zope import schema
+from zope.component import adapter
 from zope.schema.vocabulary import SimpleVocabulary
-from zope.schema.interfaces import IVocabularyFactory
-from zope.publisher.interfaces import NotFound
-from zope.publisher.interfaces import IPublishTraverse
+from zope.schema.interfaces import IVocabularyFactory, IChoice
 from zope.app.component.hooks import getSite
+from z3c.form.i18n import MessageFactory as _
 
 from plone.directives import form as directivesform
 
 from plone.tiles import Tile
 
-from plone.namedfile.utils import set_headers, stream_data
+from z3c.form.browser.select import SelectWidget
+from z3c.form.interfaces import IFormLayer, IFieldWidget, ISelectWidget
+from z3c.form.widget import FieldWidget
 
 from Products.CMFCore.utils import getToolByName
-from Products.ATContentTypes.interfaces import IATImage
+
+
+class IImagePreviewSelectWidget(ISelectWidget):
+    """Marker interface for the image preview select widget."""
+    pass
+
+
+class ImagePreviewSelectWidget(SelectWidget):
+    """A select widget for images that shows a preview of the selected
+    image next to it.
+    """
+
+    implementsOnly(IImagePreviewSelectWidget)
+    
+    klass = u'image-preview-select-widget'
+    prompt = True
+
+    promptMessage = _('select an image ...')
+
+    def js(self):
+        return  """\
+        (function($) {
+          $().ready(function() {
+            $('#%(id)s').change(function() {
+              var selected = $('#%(id)s option:selected');
+              var url = selected.attr('title');
+              $('#%(id)s-image-preview').attr('src', url);
+            });
+          })
+        })(jQuery); 
+        """ % {'id': self.id}
+
+    def getImageURLFromId(self, uid):
+        """Look-up the URL for the src attribute of an image tag from
+        its UID."""
+        site = getSite()
+        image = getattr(site.images, uid, None)
+        if image:
+            return image.absolute_url()
+        return ''  # image not found
+        # XXX: should point to a "image-not-found" image
+
+
+@adapter(IChoice,
+         Interface,
+         IFormLayer)
+@implementer(IFieldWidget)
+def ImagePreviewSelectFieldWidget(field, source, request=None):
+    """IFieldWidget factory for ImagePreviewSelectWidget."""
+    # BBB: emulate our pre-2.0 signature (field, request)
+    if request is None:
+        real_request = source
+    else:
+        real_request = request
+    fieldwidget = FieldWidget(field, ImagePreviewSelectWidget(real_request))
+    return fieldwidget
 
 
 def availableImagesVocabulary(context):
-    """Vocabulary composed of ATImages inside the '/images' folder
-    of the site root.
+    """Vocabulary composed of Images inside the '/images' folder
+    at the site root.
     """
-    site = getSite()  # the real context is lost somewhat
+    site = getSite()
     catalog = getToolByName(site, 'portal_catalog')
     portal_state = site.restrictedTraverse('@@plone_portal_state')
     root_path = portal_state.navigation_root_path()
     images_path = root_path + '/images'
     results = catalog(path=images_path,
-                      object_provides=IATImage.__identifier__)
+                      portal_type='Image')
     items = [(r.id, r.id) for r in results]
     return SimpleVocabulary.fromItems(items)
 directlyProvides(availableImagesVocabulary, IVocabularyFactory)
@@ -34,24 +91,18 @@ directlyProvides(availableImagesVocabulary, IVocabularyFactory)
 
 class IImageTile(directivesform.Schema):
 
+    directivesform.widget(imageUID=ImagePreviewSelectFieldWidget)
     imageUID = schema.Choice(title=u"Image UID", required=True,
-                             vocabulary="Available Images")
+                             vocabulary=u"Available Images")
     altText = schema.TextLine(title=u"Alternative text", required=False)
 
 
 class ImageTile(Tile):
     """Image tile.
     
-    This is a persistent tile which stores an image and optionally alt
-    text. When rendered, the tile will output an <img /> tag like::
-    
-        <img src="http://.../@@plone.app.standardtiles.image/tile-id/@@download/filename.gif" />
-    
-    The tile is a publish traversal view, so it will stream the file data
-    if the correct filename (matching the uploaded filename), is given in
-    the traversal subpath (filename.gif in the example above). Note that the
-    ``id`` query string parameter is still required for the tile to be able to
-    access its persistent data.
+    This is a transient tile which stores a reference to an image and
+    optionally alt text. When rendered, the tile will look-up the image
+    url and output an <img /> tag.
     """
 
     def __call__(self):
@@ -59,41 +110,12 @@ class ImageTile(Tile):
         imageUID = self.data.get('imageUID')
         image = getattr(self.context.images, imageUID, None)
         if image is not None:
+            imageURL = image.absolute_url()
             altText = self.data.get('altText')
             if altText is not None:
                 altText = altText.replace('"', '\"')
             else:
-                altText = image.Title()
-            imageURL = image.absolute_url() + '/image'
+                altText = ''
             return '<html><body><img src="%s" alt="%s" /></body></html>' % (imageURL, altText)
         else:
             return '<html><body><em>Image not found.</em></body></html>'
-
-class ImageTileDownload(object):
-    """Implementation of the @@download view on the image tile.
-    
-    This is a view onto the ImageTile tile view.
-    """
-    
-    implements(IPublishTraverse)
-    filename = None
-    
-    def publishTraverse(self, request, name):
-        if self.filename is None:
-            self.filename = name
-            return self
-        raise NotFound(name)
-    
-    def __call__(self):
-        """Render the file to the browser
-        """
-        
-        image = self.context.data.get('image', None)
-        if image is None:
-            raise NotFound(self, self.filename, self.request)
-        
-        if not self.filename:
-            self.filename = getattr(image, 'filename', '')
-        
-        set_headers(image, self.request.response, filename=self.filename)
-        return stream_data(image)
