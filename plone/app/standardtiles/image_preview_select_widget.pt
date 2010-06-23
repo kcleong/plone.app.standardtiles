@@ -31,13 +31,13 @@
          tal:condition="item/selected"
          tal:attributes="id item/id;
                          value item/value;
-                         title python:view.getImageURLFromId(item['value'])"
+                         title python:view.getImageURLFromId(item['value']) + '/image_thumb'"
          tal:content="item/content">label</option
   ><option id="" value=""
          tal:condition="not:item/selected"
          tal:attributes="id item/id;
                          value item/value;
-                         title python:view.getImageURLFromId(item['value'])"
+                         title python:view.getImageURLFromId(item['value']) + '/image_thumb'"
          tal:content="item/content">label</option
 ></tal:block>
 </select>
@@ -47,8 +47,7 @@
             margin: 5px; padding: 10px;
             width: 120px; height:120px;">
   <img id="image-preview" alt="" 
-       style="max-width: 100px; max-height:100px;"
        tal:attributes="id string:${view/id}-image-preview;
-                       src python:view.value and view.getImageURLFromId(view.value[0]) or ''" />
+                       src python:view.value and view.getImageURLFromId(view.value[0]) + '/image_thumb' or ''" />
 </div>
 </div>
