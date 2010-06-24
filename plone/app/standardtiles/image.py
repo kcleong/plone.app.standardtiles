@@ -38,11 +38,29 @@ class ImagePreviewSelectWidget(SelectWidget):
         return  """\
         (function($) {
           $().ready(function() {
+
+          var image_preview = $('#%(id)s-image-preview');
+          image_preview.prepOverlay({
+            subtype: 'image',
+            urlmatch: '/image_thumb$',
+            urlreplace: '/image_preview'
+          });
+
             $('#%(id)s').change(function() {
               var selected = $('#%(id)s option:selected');
               var url = selected.attr('title');
               $('#%(id)s-image-preview').attr('src', url);
+
+              var overlay = image_preview.attr("rel");
+              $(overlay).remove();
+              image_preview.removeAttr("rel");
+              image_preview.prepOverlay({
+                subtype: 'image',
+                urlmatch: '/image_thumb$',
+                urlreplace: '/image_preview'
+              });
             });
+
           })
         })(jQuery); 
         """ % {'id': self.id}
