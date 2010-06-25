@@ -1,10 +1,11 @@
 from zope.interface import directlyProvides, implementsOnly, implementer, Interface
 from zope import schema
-from zope.component import adapter
-from zope.schema.vocabulary import SimpleVocabulary
+from zope.component import adapter, getUtility
+from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
 from zope.schema.interfaces import IVocabularyFactory, IChoice
 from zope.app.component.hooks import getSite
 from z3c.form.i18n import MessageFactory as _
+from zope.intid.interfaces import IIntIds
 
 from plone.directives import form as directivesform
 
@@ -39,12 +40,14 @@ class ImagePreviewSelectWidget(SelectWidget):
         (function($) {
           $().ready(function() {
 
-          var image_preview = $('#%(id)s-image-preview');
-          image_preview.prepOverlay({
-            subtype: 'image',
-            urlmatch: '/image_thumb$',
-            urlreplace: '/image_preview'
-          });
+            var image_preview = $('#%(id)s-image-preview');
+            if (image_preview.attr('src')) {
+              image_preview.prepOverlay({
+                subtype: 'image',
+                urlmatch: '/image_thumb$',
+                urlreplace: '/image_preview'
+              });
+            }
 
             $('#%(id)s').change(function() {
               var selected = $('#%(id)s option:selected');
@@ -65,11 +68,18 @@ class ImagePreviewSelectWidget(SelectWidget):
         })(jQuery); 
         """ % {'id': self.id}
 
-    def getImageURLFromId(self, uid):
+    def getImageURLFromId(self, imageId):
         """Look-up the URL for the src attribute of an image tag from
-        its UID."""
-        site = getSite()
-        image = getattr(site.images, uid, None)
+        its id."""
+        
+        if imageId == self.noValueToken:
+            return ''
+        try:
+            imageId = int(imageId)
+        except ValueError:
+            raise Exception('The image id must be an integer')
+        intids = getUtility(IIntIds)
+        image = intids.queryObject(imageId)
         if image:
             return image.absolute_url()
         return ''  # image not found
@@ -102,15 +112,16 @@ def availableImagesVocabulary(context):
     images_path = root_path + '/images'
     results = catalog(path=images_path,
                       portal_type='Image')
-    items = [(r.id, r.id) for r in results]
-    return SimpleVocabulary.fromItems(items)
+    intids = getUtility(IIntIds)
+    terms = [SimpleTerm(value=intids.getId(r.getObject()), title=r.id) for r in results]
+    return SimpleVocabulary(terms)
 directlyProvides(availableImagesVocabulary, IVocabularyFactory)
 
 
 class IImageTile(directivesform.Schema):
 
-    directivesform.widget(imageUID=ImagePreviewSelectFieldWidget)
-    imageUID = schema.Choice(title=u"Image UID", required=True,
+    directivesform.widget(imageId=ImagePreviewSelectFieldWidget)
+    imageId = schema.Choice(title=u"Image Id", required=True,
                              vocabulary=u"Available Images")
     altText = schema.TextLine(title=u"Alternative text", required=False)
 
@@ -125,8 +136,9 @@ class ImageTile(Tile):
 
     def __call__(self):
         # Not for production use - this should be in a template!
-        imageUID = self.data.get('imageUID')
-        image = getattr(self.context.images, imageUID, None)
+        imageId = self.data.get('imageId')
+        intids = getUtility(IIntIds)
+        image = intids.queryObject(imageId)
         if image is not None:
             imageURL = image.absolute_url()
             altText = self.data.get('altText')
