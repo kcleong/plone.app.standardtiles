@@ -25,8 +25,13 @@ setup(name='plone.app.standardtiles',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'zope.app.component',
+          'zope.intid',
+          'z3c.relationfield',
+          'z3c.form',
           'plone.app.tiles',
           'plone.directives.tiles',
+          'Products.CMFCore',
       ],
       extras_require={
           'test': [
