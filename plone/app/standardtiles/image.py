@@ -1,4 +1,4 @@
-from zope.interface import directlyProvides, implementsOnly, implementer, Interface
+from zope.interface import directlyProvides, implements, implementsOnly, implementer, Interface
 from zope import schema
 from zope.component import adapter, getUtility
 from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
@@ -6,6 +6,8 @@ from zope.schema.interfaces import IVocabularyFactory, IChoice
 from zope.app.component.hooks import getSite
 from z3c.form.i18n import MessageFactory as _
 from zope.intid.interfaces import IIntIds
+from z3c.relationfield import RelationChoice
+from z3c.relationfield.interfaces import IHasOutgoingRelations
 
 from plone.directives import form as directivesform
 
@@ -121,7 +123,7 @@ directlyProvides(availableImagesVocabulary, IVocabularyFactory)
 class IImageTile(directivesform.Schema):
 
     directivesform.widget(imageId=ImagePreviewSelectFieldWidget)
-    imageId = schema.Choice(title=u"Image Id", required=True,
+    imageId = RelationChoice(title=u"Image Id", required=True,
                              vocabulary=u"Available Images")
     altText = schema.TextLine(title=u"Alternative text", required=False)
 
@@ -134,9 +136,12 @@ class ImageTile(Tile):
     url and output an <img /> tag.
     """
 
+    implements(IHasOutgoingRelations)
+    
     def __call__(self):
         # Not for production use - this should be in a template!
         imageId = self.data.get('imageId')
+        imageId = int(imageId)
         intids = getUtility(IIntIds)
         image = intids.queryObject(imageId)
         if image is not None:
