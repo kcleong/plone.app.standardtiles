@@ -10,6 +10,7 @@ from z3c.relationfield import RelationChoice
 from z3c.relationfield.interfaces import IHasOutgoingRelations
 
 from plone.directives import form as directivesform
+from plone.registry.interfaces import IRegistry
 
 from plone.tiles import Tile
 
@@ -111,7 +112,8 @@ def availableImagesVocabulary(context):
     catalog = getToolByName(site, 'portal_catalog')
     portal_state = site.restrictedTraverse('@@plone_portal_state')
     root_path = portal_state.navigation_root_path()
-    images_path = root_path + '/images'
+    registry = getUtility(IRegistry)
+    images_path = "%s/%s" % (root_path, registry['plone.app.standardtiles.interfaces.IStandardTilesSettings.images_repo_path'])
     results = catalog(path=images_path,
                       portal_type='Image')
     intids = getUtility(IIntIds)
