@@ -12,13 +12,17 @@ from z3c.relationfield.interfaces import IHasOutgoingRelations
 from plone.directives import form as directivesform
 from plone.registry.interfaces import IRegistry
 
-from plone.tiles import Tile
+from plone.tiles import PersistentTile
 
 from z3c.form.browser.select import SelectWidget
-from z3c.form.interfaces import IFormLayer, IFieldWidget, ISelectWidget
+from z3c.form.interfaces import IFormLayer, IFieldWidget, ISelectWidget, ISubForm
 from z3c.form.widget import FieldWidget
+from z3c.form import field
+from z3c.form import form
 
 from Products.CMFCore.utils import getToolByName
+
+from zope.container.interfaces import INameChooser
 
 
 class IImagePreviewSelectWidget(ISelectWidget):
@@ -37,6 +41,42 @@ class ImagePreviewSelectWidget(SelectWidget):
     prompt = True
 
     promptMessage = _('select an image ...')
+
+    def update(self):
+        self.upload = ImageUploadForm(None, self.request)
+        self.upload.update()
+
+        if not self.ignoreRequest:
+            data, errors = self.upload.extractData()
+            if errors:
+                return
+            
+            filedata = data['image_upload']
+            image_upload_widget = self.upload.widgets['image_upload']
+            
+            if filedata:
+                site = getSite()
+                registry = getUtility(IRegistry)
+                images_path = str(registry['plone.app.standardtiles.interfaces.IStandardTilesSettings.images_repo_path']) # XXX: why doesn't it return a string instead of unicode?
+                repo = site.unrestrictedTraverse(images_path)
+                filename = image_upload_widget.filename
+                
+                temp_id = repo.generateUniqueId(filename)
+                repo.invokeFactory('Image', temp_id)
+                image = getattr(repo, temp_id)
+                image.setImage(filedata)
+
+                # set a unique name for the uploaded image
+                namechooser = INameChooser(repo)
+                unique_id = namechooser.chooseName(filename, image)
+                image.setId(unique_id)
+                
+                intids = getUtility(IIntIds)
+                image_id = intids.getId(image)
+
+                self.request.form[self.name] = str(image_id)
+
+        super(ImagePreviewSelectWidget, self).update()
 
     def js(self):
         return  """\
@@ -104,6 +144,15 @@ def ImagePreviewSelectFieldWidget(field, source, request=None):
     return fieldwidget
 
 
+class ImageUploadForm(form.Form):
+    implements(ISubForm)
+    css_class = 'image_subform'
+
+    fields = field.Fields(
+        schema.Bytes(__name__='image_upload', required=False)
+        )
+
+
 def availableImagesVocabulary(context):
     """Vocabulary composed of Images inside the '/images' folder
     at the site root.
@@ -127,10 +176,12 @@ class IImageTile(directivesform.Schema):
     directivesform.widget(imageId=ImagePreviewSelectFieldWidget)
     imageId = RelationChoice(title=u"Image Id", required=True,
                              vocabulary=u"Available Images")
-    altText = schema.TextLine(title=u"Alternative text", required=False)
+    imageId._type = int
+    altText = schema.TextLine(title=u"Alternative text", required=False,
+                              missing_value=u'')
 
 
-class ImageTile(Tile):
+class ImageTile(PersistentTile):
     """Image tile.
     
     This is a transient tile which stores a reference to an image and

@@ -50,4 +50,8 @@
        tal:attributes="id string:${view/id}-image-preview;
                        src python:view.value and view.getImageURLFromId(view.value[0]) + '/image_thumb' or ''" />
 </div>
+
+Or upload a new image:
+<div tal:replace="structure view/upload/render" />
+
 </div>
