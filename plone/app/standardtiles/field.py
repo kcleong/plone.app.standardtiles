@@ -7,13 +7,13 @@ from plone.autoform.utils import resolveDottedName
 from plone.z3cform import z2
 
 
-class DexterityFieldTile(DisplayForm, Tile):
+class DexterityFieldTile(Tile):
     """Field tile for Dexterity content
     """
 
     def __init__(self, context, request):
-        Tile.__init__(self, context, request)
-        DisplayForm.__init__(self, context, request)
+        super(DexterityFieldTile, self).__init__(context, request)
+        self.form = DisplayForm(context, request)
         self.fieldname = self.data['field']
         
         for schema in iterSchemata(self.context):
@@ -22,18 +22,18 @@ class DexterityFieldTile(DisplayForm, Tile):
                 # with the same name in different schemas? One should
                 # be able to use interface.fieldname instead.
                 self.schema = schema
-                self.fields = Fields(schema[self.fieldname])
+                self.form.fields = Fields(schema[self.fieldname])
                 return
 
         raise KeyError('Field with name %s not found.' % self.fieldname)
 
-    def updateWidgets(self):
+    def update(self):
         factory = self.schema.getTaggedValue(WIDGETS_KEY)[self.fieldname]
-        if self.fields[self.fieldname].widgetFactory.get(self.mode, None) is None:
+        if self.form.fields[self.fieldname].widgetFactory.get(self.form.mode, None) is None:
             if isinstance(factory, basestring):
                 factory = resolveDottedName(factory)
-            self.fields[self.fieldname].widgetFactory = factory
-        DisplayForm.updateWidgets(self)
+            self.form.fields[self.fieldname].widgetFactory = factory
+        self.form.update()
 
     def _wrap_widget(self, render):
         return u"<html><body>%s</body></html>" % render
@@ -41,4 +41,4 @@ class DexterityFieldTile(DisplayForm, Tile):
     def __call__(self):
         z2.switch_on(self)
         self.update()
-        return self._wrap_widget(self.widgets[self.fieldname].render())
+        return self._wrap_widget(self.form.widgets[self.fieldname].render())
