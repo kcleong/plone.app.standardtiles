@@ -15,20 +15,26 @@ class DexterityFieldTile(DisplayForm, Tile):
     def __init__(self, context, request):
         Tile.__init__(self, context, request)
         DisplayForm.__init__(self, context, request)
-        self.fields = Fields(*iterSchemata(self.context))
+        components = self.data['field'].split('-', 1)
+        self.schema = None
+        if len(components) > 0:
+            for schema in iterSchemata(self.context):
+                if schema.__identifier__.endswith(components[0]):
+                    self.schema = schema
+        else:
+            self.schema = tuple(iterSchemata(self.context))[0]
+        self.field = components[-1]
+        self.fields = Fields(self.schema).select(self.field)
 
     def updateWidgets(self):
-        for schema in iterSchemata(self.context):
-            if self.data['field'] in schema:
-                widgets = mergedTaggedValueDict(schema, WIDGETS_KEY)
-                name = self.data['field']
-                if name in widgets:
-                    factory = widgets[name]
-                    if self.fields[name].widgetFactory.get(
-                                self.mode, None) is None:
-                        if isinstance(factory, basestring):
-                            factory = resolveDottedName(factory)
-                        self.fields[name].widgetFactory = factory
+        widgets = mergedTaggedValueDict(self.schema, WIDGETS_KEY)
+        if self.field in widgets:
+            factory = widgets[self.field]
+            if self.fields[self.field].widgetFactory.get(
+                        self.mode, None) is None:
+                if isinstance(factory, basestring):
+                    factory = resolveDottedName(factory)
+                self.fields[self.field].widgetFactory = factory
         DisplayForm.updateWidgets(self)
 
     @property
@@ -36,15 +42,12 @@ class DexterityFieldTile(DisplayForm, Tile):
         """Checks wheter the user has read permission of the field: if this is
         not the case, then the field is not displayed
         """
-        # BBB: Refactor me!
-        for schema in iterSchemata(self.context):
-            if self.data['field'] in schema:
-                if self.data['field'] in _getDisallowedFields(
-                    self.context,
-                    mergedTaggedValueDict(schema, READ_PERMISSIONS_KEY),
-                    ''
-                ):
-                    return False
+        if self.field in _getDisallowedFields(
+            self.context,
+            mergedTaggedValueDict(self.schema, READ_PERMISSIONS_KEY),
+            ''
+        ):
+            return False
         return True
 
     def _wrap_widget(self, render):
@@ -54,6 +57,6 @@ class DexterityFieldTile(DisplayForm, Tile):
         z2.switch_on(self)
         if self.isVisible:
             self.update()
-            return self._wrap_widget(self.widgets[self.data['field']].render())
+            return self._wrap_widget(self.widgets[self.field].render())
         else:
             return self._wrap_widget(u'')
