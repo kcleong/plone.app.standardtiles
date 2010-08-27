@@ -4,7 +4,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.image</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -28,7 +28,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.attachment</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -52,7 +52,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.video</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -76,7 +76,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.proxy</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -100,7 +100,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.navigation</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -124,7 +124,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.discussion</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -148,7 +148,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.contentlisting</element>
         <element key="category">structure</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -172,7 +172,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.rss</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -196,7 +196,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.tableofcontents</element>
         <element key="category">structure</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -220,7 +220,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.document_byline</element>
         <element key="category">structure</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -244,7 +244,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.related_items</element>
         <element key="category">structure</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
@@ -268,7 +268,7 @@
             interface="plone.app.deco.interfaces.ITile">        
         <element key="label">plone.app.standardtiles.calendar</element>
         <element key="category">media</element>
-        <element key="type">app</element>
+        <element key="tile_type">app</element>
         <element key="default_value"></element>
         <element key="read_only">false</element>
         <element key="settings">true</element>
