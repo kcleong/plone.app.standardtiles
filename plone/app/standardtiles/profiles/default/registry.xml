@@ -299,4 +299,29 @@
              <element>tile-align-left</element>
         </value>
     </record>  
+
+   <records prefix="plone.app.deco.app_tiles.plone_app_standardtiles_keywords"
+            interface="plone.app.deco.interfaces.ITile">        
+        <value key="name">Keywords</value>
+        <value key="label">plone.app.standardtiles.keywords</value>
+        <value key="category">structure</value>
+        <value key="tile_type">app</value>
+        <value key="default_value"></value>
+        <value key="read_only">false</value>
+        <value key="settings">true</value>
+        <value key="favorite">false</value>
+        <value key="rich_text">false</value>
+    </records>
+    <record name="plone.app.deco.app_tiles.plone_app_standardtiles_keywords.available_actions">
+        <field type="plone.registry.field.List">
+            <title>Available actions for the Keywords tile</title>
+            <value_type type="plone.registry.field.TextLine" />
+        </field>
+        <value>
+             <element>blur</element>
+             <element>tile-align-block</element>
+             <element>tile-align-right</element>
+             <element>tile-align-left</element>
+        </value>
+    </record>  
 </registry>
