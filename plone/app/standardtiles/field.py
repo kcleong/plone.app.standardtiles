@@ -36,6 +36,7 @@ class DexterityFieldTile(DisplayForm, Tile):
         """Checks wheter the user has read permission of the field: if this is
         not the case, then the field is not displayed
         """
+        # BBB: Refactor me!
         for schema in iterSchemata(self.context):
             if self.data['field'] in schema:
                 if self.data['field'] in _getDisallowedFields(
