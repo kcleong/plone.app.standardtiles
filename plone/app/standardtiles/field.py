@@ -17,7 +17,7 @@ class DexterityFieldTile(DisplayForm, Tile):
         DisplayForm.__init__(self, context, request)
         components = self.data['field'].split('-', 1)
         self.schema = None
-        if len(components) > 0:
+        if len(components) > 1:
             for schema in iterSchemata(self.context):
                 if schema.__identifier__.endswith(components[0]):
                     self.schema = schema
