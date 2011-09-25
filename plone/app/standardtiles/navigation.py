@@ -33,11 +33,9 @@ from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.defaultpage import isDefaultPage
 from plone.app.layout.navigation.interfaces import INavtreeStrategy
 from plone.app.layout.navigation.interfaces import INavigationQueryBuilder
-from plone.formwidget.contenttree import ContentTreeFieldWidget
+from plone.formwidget.autocomplete.widget import AutocompleteFieldWidget
 
 from plone.app.standardtiles import PloneMessageFactory as _
-
-from plone.app.vocabularies.editors import AvailableEditorsVocabulary
 
 class INavigationTile(Schema):
     """A tile which can render the navigation tree
@@ -49,14 +47,14 @@ class INavigationTile(Schema):
             default=u"",
             required=False)
 
-    form.widget(root=ContentTreeFieldWidget)
+    form.widget(root=AutocompleteFieldWidget)
     root = schema.Choice(
             title=_(u"Root node"),
             description=_(u"You may search for and choose a folder to act as "
                            "the root of the navigation tree.  Leave blank to "
                            "use the Plone site root."),
             source=ObjPathSourceBinder(
-                object_provides=IContentish.__identifier__,
+#                object_provides=IContentish.__identifier__,
             ),
             required=False)
 
