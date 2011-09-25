@@ -45,6 +45,7 @@ class INavigationTile(Schema):
             default=u"",
             required=False)
 
+    # We should use ContentTreeFieldWidget, but this is broken in Deco
     form.widget(root=AutocompleteFieldWidget)
     root = schema.Choice(
             title=_(u"Root node"),
@@ -52,7 +53,8 @@ class INavigationTile(Schema):
                            "the root of the navigation tree.  Leave blank to "
                            "use the Plone site root."),
             source=ObjPathSourceBinder(
-#                object_provides=IContentish.__identifier__,
+                object_provides=IContentish.__identifier__,
+#                navigation_tree_query = {'path': {'query':'/'}}
             ),
             required=False)
 
