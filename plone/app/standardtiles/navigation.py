@@ -1,3 +1,8 @@
+from Products.CMFCore.interfaces._content import IFolderish, IContentish
+from plone.app.form.widgets.uberselectionwidget import UberSelectionWidget
+from plone.app.vocabularies.catalog import SearchableTextSourceBinder
+from plone.formwidget.contenttree.source import ObjPathSourceBinder
+from plone.supermodel import fields
 from zope import schema
 from zope.interface import implements
 from zope.interface import Interface
@@ -17,7 +22,8 @@ from Products.CMFPlone.browser.navtree import SitemapNavtreeStrategy
 from Products.CMFDynamicViewFTI.interface import IBrowserDefault
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
-from plone.tiles import PersistentTile
+from plone.directives import form
+from plone.tiles import Tile
 from plone.memoize.instance import memoize
 from plone.directives.form import Schema
 from plone.i18n.normalizer.interfaces import IIDNormalizer
@@ -27,9 +33,11 @@ from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.defaultpage import isDefaultPage
 from plone.app.layout.navigation.interfaces import INavtreeStrategy
 from plone.app.layout.navigation.interfaces import INavigationQueryBuilder
+from plone.formwidget.contenttree import ContentTreeFieldWidget
 
 from plone.app.standardtiles import PloneMessageFactory as _
 
+from plone.app.vocabularies.editors import AvailableEditorsVocabulary
 
 class INavigationTile(Schema):
     """A tile which can render the navigation tree
@@ -41,11 +49,15 @@ class INavigationTile(Schema):
             default=u"",
             required=False)
 
-    root = schema.TextLine(
+    form.widget(root=ContentTreeFieldWidget)
+    root = schema.Choice(
             title=_(u"Root node"),
             description=_(u"You may search for and choose a folder to act as "
                            "the root of the navigation tree.  Leave blank to "
                            "use the Plone site root."),
+            source=ObjPathSourceBinder(
+                object_provides=IContentish.__identifier__,
+            ),
             required=False)
 
     includeTop = schema.Bool(
@@ -86,7 +98,7 @@ class INavigationTile(Schema):
             required=False)
 
 
-class NavigationTile(PersistentTile):
+class NavigationTile(Tile):
 
     implements(INavigationTile)
 
