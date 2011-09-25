@@ -111,78 +111,148 @@ created before::
     >>> print browser.contents
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
     <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
-    <body>
+      <body>
         <div class="navigationTile">
-            <h2 class="tileHeader">TEST NAVIGATION TILE</h2>
-            <ul class="navTree navTreeLevel0">
-                <li class="navTreeItem navTreeTopNode navTreeCurrentNode">
-                    <div>
-                        <a href="http://nohost/plone" class="contenttype-plone-site navTreeCurrentItem" title="">
-                            Home
-                        </a>
-                    </div>
-                </li>
-                <li class="navTreeItem visualNoMarker section-a-simple-page">
-                   <a href="http://nohost/plone/a-simple-page" class="state-missing-value contenttype-document" title="A description">
-                       <span>A simple page</span>
-                   </a>
-                </li>
-            </ul>
+          <h2 class="tileHeader">TEST NAVIGATION TILE</h2>
+          <ul class="navTree navTreeLevel0">
+            <li class="navTreeItem navTreeTopNode navTreeCurrentNode">
+    <BLANKLINE>
+                <a href="http://nohost/plone" class="contenttype-plone-site navTreeCurrentItem" title="">
+                  <span>Home</span></a>
+    <BLANKLINE>
+            </li>
+    <BLANKLINE>
+    <BLANKLINE>
+    <BLANKLINE>
+    <BLANKLINE>
+    <li class="navTreeItem visualNoMarker section-a-simple-page">
+    <BLANKLINE>
+    <BLANKLINE>
+    <BLANKLINE>
+    <BLANKLINE>
+            <a href="http://nohost/plone/a-simple-page" class="state-missing-value contenttype-document" title="A description">
+    <BLANKLINE>
+                <span>A simple page</span></a>
+    <BLANKLINE>
+    <BLANKLINE>
+    <BLANKLINE>
+    </li>
+    <BLANKLINE>
+    <BLANKLINE>
+    <BLANKLINE>
+    <BLANKLINE>
+          </ul>
         </div>
-    </body>
+      </body>
+    </html>
+    <BLANKLINE>
+
+Sitemap tree tile
+---------------------
+
+The sitemap tile displays a sitemap for the site.
+
+Rendering this tile in the site root should show the document we
+created before::
+
+
+    >>> browser.open(portalURL + '/@@add-tile/plone.app.standardtiles.sitemap/sitemap-tile')
+    >>> browser.getControl(name='name').value = 'TEST SITEMAP TILE'
+    >>> browser.getControl(label='Save').click()
+    >>> browser.open(portalURL + '/@@plone.app.standardtiles.sitemap/sitemap-tile')
+    >>> print browser.contents
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+      <body>
+        <div class="navigationTile">
+          <ul class="navTree navTreeLevel0">
+            <li class="navTreeItem navTreeTopNode navTreeCurrentNode">
+                <a href="http://nohost/plone" class="contenttype-plone-site navTreeCurrentItem" title="">
+                  <span>Home</span></a>
+            </li>
+            <li class="navTreeItem visualNoMarker section-a-simple-page">
+                    <a href="http://nohost/plone/a-simple-page" class="state-missing-value contenttype-document" title="A description">
+                  <span>A simple page</span></a>
+            </li>
+          </ul>
+        </div>
+      </body>
     </html>
 
 Image tile
 -----------
 
-The image tile lets you select an existing image or upload a new one
-to insert into the page. By default, the tile looks for and uploads
-images to a folder named ``images`` at the root of the plone
-site. This is can be configured changing the ``images_repo_path``
-property of the ``IStandardTilesSettings`` interface in the registry.
+The image tile uses plone.app.mediarepository to allow you to select
+an image or upload a new image. Uploading images is handled clientside within
+the mediarepository picker, this form just processes any selected images.
 
-We first create this folder to be able to upload images to it::
+We first upload some test images to the default repository::
 
-    >>> portal.invokeFactory('Folder', 'images', title='Images')
-    'images'
-    >>> images = portal['images']
+    >>> gif = 'GIF89a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00\x003\x00!\xf9\x04\x01\x00\x00\x01\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02L\x01\x00;'
+    >>> repo = portal['media-repository']
+    >>> repo
+    <Container at /plone/media-repository>
+    >>> repo.invokeFactory('Image', 'test-image1', title='Test Image 1', image=gif)
+    'test-image1'
+    >>> repo.invokeFactory('Image', 'test-image2', title='Test Image 2', image=gif)
+    'test-image2'
+    >>> repo['test-image1'].getImage().getBlob().open().read() == gif
+    True
+    >>> repo['test-image2'].getImage().getBlob().open().read() == gif
+    True
     >>> transaction.commit()
 
-We now create an image tile with an uploaded image::
+We now create an image tile, initially the form is empty::
 
     >>> browser.open(portalURL + '/@@add-tile/plone.app.standardtiles.image/image-tile')
-    >>> browser.getControl(name='imageId.method').getControl(value='upload').selected = True
-    >>> upload = browser.getControl(name='form.widgets.image_upload')
-    >>> import cStringIO
-    >>> upload.add_file(cStringIO.StringIO('Image contents'), 'image/jpeg', 'image.jpg')
+    >>> browser.getControl(name='imageId').value
+    ''
+    >>> browser.getControl(name='altText').value
+    ''
+    >>> browser.getControl(name='image_size:list').value
+    ['mini']
+
+Select an image, give it an Alt text and value. Save it::
+
+    >>> '/'.join(repo['test-image1'].getPhysicalPath())
+    '/plone/media-repository/test-image1'
+    >>> browser.getControl(name='imageId').value = '/plone/media-repository/test-image1'
+    >>> browser.getControl(name='altText').value = 'Aardvarks!'
+    >>> browser.getControl(name='image_size:list').value = ['thumb']
     >>> browser.getControl(label='Save').click()
+
+The tile now reflects the image::
+
     >>> browser.open(portalURL + '/@@plone.app.standardtiles.image/image-tile')
     >>> browser.contents
-    '<html><body><img src="http://nohost/plone/images/image.jpg" alt="" /></body></html>'
+    '...<img src="http://nohost/plone/media-repository/test-image1/@@images/image/thumb" alt="Aardvarks!" />...'
 
-Note that, since we have not specified an alternative text, the
-``alt`` attribute of the ``img`` tag is empty (but present).
-
-The image has been uploaded to the ``images`` folder created above::
-
-    >>> images.keys()
-    ['image.jpg']
-
-If we edit the tile now, our image should be selected in the dropdown
-of existing images::
+If we open the tile again, should have the same values selected::
 
     >>> browser.open(portalURL + '/@@edit-tile/plone.app.standardtiles.image/image-tile')
-    >>> imageId = browser.getControl(name='imageId:list')
-    >>> imageId.getControl('image.jpg').selected
-    True
+    >>> browser.getControl(name='imageId').value
+    '/plone/media-repository/test-image1'
+    >>> browser.getControl(name='altText').value
+    'Aardvarks!'
+    >>> browser.getControl(name='image_size:list').value
+    ['thumb']
 
-Entering an alternative text will display it properly::
+Switch the image, tile should update::
 
-    >>> browser.getControl(name='altText').value = "An image"
+    >>> browser.getControl(name='imageId').value = '/plone/media-repository/test-image2'
     >>> browser.getControl(label='Save').click()
     >>> browser.open(portalURL + '/@@plone.app.standardtiles.image/image-tile')
     >>> browser.contents
-    '<html><body><img src="http://nohost/plone/images/image.jpg" alt="An image" /></body></html>'
+    '...<img src="http://nohost/plone/media-repository/test-image2/@@images/image/thumb" alt="Aardvarks!" />...'
+
+Finally if tile points at a nonexistent image, the tile should show a reasonable error::
+
+    >>> del repo['test-image2']
+    >>> repo.reindexObject()
+    >>> transaction.commit()
+    >>> browser.open(portalURL + '/@@plone.app.standardtiles.image/image-tile')
+    >>> browser.contents
+    '...<em>Image not found.</em>...'
 
 
 Attachment tile
@@ -266,3 +336,27 @@ Rendering the tile again should result in different html:
      >>> 'class="event"' in tile()
      True
 
+
+RSS Tile
+--------
+
+This tile shows the first five items in a RSS feed.
+
+Use the RSS stored in the test directory, this way we don't have an external dependency.
+
+    >>> import os
+    >>> import plone.app.standardtiles.tests as test_dir
+    >>> test_dir = os.path.dirname(test_dir.__file__)
+    >>> path = 'file://{0}'.format(os.path.join(test_dir, 'RSS.xml'))
+
+Create the RSS tile, with the local RSS URI:
+
+    >>> browser.open(portalURL + '/@@add-tile/plone.app.standardtiles.rss/rss-tile')
+    >>> browser.getControl(name='portlet_title').value = 'TEST RSS TILE'
+    >>> browser.getControl(name='url').value = path
+    >>> browser.getControl(label='Save').click()
+    >>> browser.open(portalURL + '/@@plone.app.standardtiles.rss/rss-tile')
+    >>> 'TEST RSS TILE' in browser.contents
+    True
+    >>> """<a href="http://localhost:55440/plone/doc-one" class="tile">""" in browser.contents
+    True
